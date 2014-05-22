@@ -8,15 +8,15 @@
   stroke-width: 1.5px;
 }
 
-#licensing {
+#conjunctionSourceLink, #conjunctionTargetLink, #conjunctionLink {
   fill: green;
 }
 
-.link.licensing {
+.link.conjunctionSourceLink, .link.conjunctionTargetLink, .link.conjunctionLink {
   stroke: green;
 }
 
-.link.resolved {
+.link.conjunctionLink {
   stroke-dasharray: 0,2 1;
 }
 
@@ -36,6 +36,7 @@ text {
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <pre id="sourcetext" style="display:none;">
+
 Sae Evald on nagu valge habemega päkapikk, kelle küps hele vaim kumab läbi hapra keha. Üheksakümne ühe aastane Paganamaalt pärit humanitaarteadlane on kahe ilmasõja vahel rännanud läbi pool maailma, jõudes Tartu Ülikoolis õppida nii õigusteadust kui teoloogiat, teinud eksameid koguni troopika-arstiteaduses – ikka selleks et elurännakul võimalikult mitmekülgne olla. Sel korral ei kõnele me võrokestest ega indiaanlastest. Palusin Evaldil kõneleda emadest.
 
 “Teeme teed ja mul on kapis mett ja leiba ka” –
@@ -82,45 +83,70 @@ function zip(arrays) {
 
 
 var min_word_len = 2;
-var conjunctions = ["VÕI", "VÕIB", "JA", "NING", "ME", "EI", "ON", "KA", "KUI", "AGA", "MIS", "ET", "OMA", "NAGU", "SEE", "SIIS", "KES", "SEDA", "MIDA", "KAS", "NII", "NEID", "EEST", "NAD", "NEED", "SELLE", "SAA", "VÄGA", "SEST", "KOGU", "SEAL", "OLI", "KUS", "MA", "TA", "MEIE", "MEIL", "KÜLL", "KÕIK", "OLE", "VEEL", "OLNUD", "SELLES", "SELLEST", "ENAM", "PALJU", "MITTE", "MINU", "SINU", "SIISKI", "IKKAGI", "ISE", "OSA", "MILLE", "TÕESTI", "EGA", "MINGIT", "ÜKS", "OSA", "JAOKS", "OLEN", "OLLA", "KUID", "TEGELIKULT", "AINULT", "MUIDUGI", "KÕIGE", "MIDAGI", "ROHKEM", "ENNAST", "ISEGI", "ÜLDSE", "TULEB"
-  , "MULLE", "NIIMOODI", "LAHTI", "VANA", "VAID", "NÄITEKS", "VÕIKS", "KUIDAS", "OLGU", "TÄIESTI", "KUNAGI"
-  , "JUST", "TEHA", "PEAKS", "JUBA", "IKKA", "NÕNDA", "MINGI", "JUURDE", "SELLIST", "SELLINE", "IGAL", "NENDE", "NEIST", "ÄRA"
-  , "EKS", "SAMAS", "KOKKU", "ÜHE", "SELLISTE"
-  , "JU", "SA", "OLEKS", "KAKS", "LÄBI", "TALLE", "JAH"];
+var conjunctions = ["AGA", "AINULT", "EEST", "EGA", "EI", "EKS", "ENAM", "ENNAST", "ET", "IGAL", "IKKA", "IKKAGI", "ISE", "ISEGI", "JA", "JAH", "JAOKS", "JU", "JUBA", "JUST", "JUURDE", "KA", "KAKS", "KAS", "KES", "KOGU", "KOKKU", "KUI", "KUID", "KUIDAS", "KUNAGI", "KUS", "KÕIGE", "KÕIK", "KÜLL", "LAHTI", "LÄBI", "MA", "ME", "MEIE", "MEIL", "MIDA", "MIDAGI", "MILLE", "MINGI", "MINGIT", "MINU", "MIS", "MITTE", "MUIDUGI", "MULLE", "NAD", "NAGU", "NEED", "NEID", "NEIST", "NENDE", "NII", "NIIMOODI", "NING", "NÄITEKS", "NÕNDA", "OLE", "OLEKS", "OLEN", "OLGU", "OLI", "OLLA", "OLNUD", "OMA", "ON", "OSA", "PALJU", "PEAKS", "ROHKEM", "SA", "SAA", "SAMAS", "SEAL", "SEDA", "SEE", "SELLE", "SELLES", "SELLEST", "SELLINE", "SELLIST", "SELLISTE", "SEST", "SIIS", "SIISKI", "SINU", "SUL", "TA", "TALLE", "TEGELIKULT", "TEHA", "TULEB", "TÄIESTI", "TÕESTI", "VAID", "VANA", "VEEL", "VÄGA", "VÕI", "VÕIB", "VÕIKS", "ÄRA", "ÜHE", "ÜKS", "ÜLDSE"
+];
 var sentence_re = /[A-Za-zõüäöÕÜÄÖ0..9][^.!?\n]+([^\w\s]|(?=\n)|$)/g;
 var word_re = /[ .,:;!\?})„“”]+/;
 var bigram = "";
 var bigrams = [];
-var leftw = "";
-var rightw = "";
+var source_w = "";
+var target_w = "";
 
 var sourcetext = document.getElementById("sourcetext").innerHTML
 var sentences = sourcetext.match( sentence_re );
 var linkDistance = 30;
-var charge = -300;
+var charge = -100;
 // graph size sqrt(len(text))*linkDistance
 var graph_size = Math.sqrt(sourcetext.length) * linkDistance;
 
+var id_counter = 0;
 for(var i in sentences)
 {
-  sentence = sentences[i];
-  words = sentence.split(word_re);
-  rightw = "";
-  leftw = "";
-  while ((rightw.length < min_word_len || conjunctions.indexOf(rightw) > -1) && words.length > 0)
-    rightw = words.pop().toUpperCase();
-  if (rightw.length < min_word_len || conjunctions.indexOf(rightw) > -1)
-    continue;
-  while (words.length > 0)
-  {
-    while ((leftw.length < min_word_len || conjunctions.indexOf(leftw) > -1) && words.length > 0)
-      leftw = words.pop().toUpperCase();
-    if (leftw.length < min_word_len || conjunctions.indexOf(leftw) > -1)
-      continue;
-    bigram = {id: leftw+"|"+rightw, source: leftw, target: rightw, type: "linked"};
+  var sentence = sentences[i];
+  var words = sentence.split(word_re);
+  var source_w = "";
+  var target_w = "";
+  var source_id = "";
+  var target_id = "";
+  var link_type = "plainLink";
+  var source_type = "";
+  var target_type = "";
+
+  while (target_w.length < min_word_len && words.length > 0) {
+    target_w = words.pop().toUpperCase();
+    target_id = target_w;
+  }
+  if (conjunctions.indexOf(target_w) > -1) {
+    target_id += id_counter++;
+    target_type = "conjunction";
+  }
+  while (words.length > 0) {
+    while (source_w.length < min_word_len && words.length > 0) {
+      source_w = words.pop().toUpperCase();
+      source_id = source_w;
+    }
+    if (conjunctions.indexOf(source_w) > -1) {
+      source_id += id_counter++;
+      source_type = "conjunction";
+    }
+    link_type = "plainLink";
+    if (source_type == "conjunction") {
+      if (target_type == "conjunction") {
+        link_type = "conjunctionLink";
+      } else {
+        link_type = "conjunctionSourceLink";
+      }
+    } else {
+      if (target_type == "conjunction") {
+        link_type = "conjunctionTargetLink";
+      }
+    }
+    bigram = {source_id: source_id, target_id: target_id, source: source_w, target: target_w, type: link_type};
     bigrams.push(bigram);
-    rightw = leftw;
-    leftw = "";
+    target_w = source_w;
+    target_id = source_id;
+    source_w = "";
+    source_type = "";
   }
 }
 
@@ -130,12 +156,8 @@ var nodes = {};
 
 // Compute the distinct nodes from the links.
 links.forEach(function(link) {
-  if (conjunctions.indexOf(link.source) > -1) {
-
-  } else {
-    link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
-  }
-  link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+  link.source = nodes[link.source_id] || (nodes[link.source_id] = {name: link.source});
+  link.target = nodes[link.target_id] || (nodes[link.target_id] = {name: link.target});
 });
 
 var width = graph_size,
@@ -156,7 +178,7 @@ var svg = d3.select("body").append("svg")
 
 // Per-type markers, as they don't inherit styles.
 svg.append("defs").selectAll("marker")
-    .data(["licensing", "resolved", "linked"])
+    .data(["conjunctionSourceLink", "conjunctionTargetLink", "conjunctionLink", "plainLink"])
   .enter().append("marker")
     .attr("id", function(d) { return d; })
     .attr("viewBox", "0 -5 10 10")
