@@ -1,1 +1,1 @@
-Published at mitselek.github.io/bi-graph
+Published at http://mitselek.github.io/bi-graph
